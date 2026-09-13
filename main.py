@@ -28,6 +28,8 @@ class Player:
             self.roll_a()
         elif self.b == "d":
             self.roll_d()
+        elif self.b == "antre":
+            self.r = 20
         else:
             self.r = random.randint(1, 20)
 
@@ -38,10 +40,10 @@ class Player:
         self.r = min(random.randint(1, 20), random.randint(1, 20))
 
 
-test1 = Player("test1", +10, "d")
-test2 = Player("test2", +1, "r")
+test1 = Player("test1", +10, "a")
+test2 = Player("test2", +1, "")
 test3 = Player("test3", -10, "d")
-initiative = []
+initiative = [test1, test2, test3]
 
 @bot.event
 async def on_ready():
@@ -106,7 +108,7 @@ async def roll(ctx, *, msg):
 
 
 def sort_ini(p: Player):
-    if p.r == 20:
+    if p.r == 20 and p.b != "antre":
         return 100
     elif p.r == 1:
         return -100
@@ -177,6 +179,20 @@ async def remove_from_ini(ctx, *, msg):
     else:
         await ctx.reply(f"```ml\n{msg} n'est pas dans l'initiative```")
 
+@bot.tree.command(name="add_antre", description="add antre to initiative")
+async def add_antre(interaction: discord.Interaction):
+
+    # check if entity is already in initiative
+    for i in initiative:
+        if i.b == "antre":
+            await interaction.response.send_message(f"```ml\nIL Y A DEJA UNE ANTRE DANS L'INITIATIVE```")
+            return
+
+    # create antre and add to initiative
+    antre = Player("Antre", 0, "antre")
+    antre.r = 20
+    initiative.append(antre)
+    await interaction.response.send_message(f"```md\nAntre ajoutée !```")
 
 
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
