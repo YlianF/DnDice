@@ -24,25 +24,27 @@ class Player:
         self.b: str = bonus
     
     def roll(self):
-        if self.b == "a":
-            self.roll_a()
-        elif self.b == "d":
-            self.roll_d()
+        if self.b == "a" or self.b == "d":
+            self.roll_roll()
         elif self.b == "antre":
             self.r = 20
         else:
             self.r = random.randint(1, 20)
 
-    def roll_a(self):
-        self.r = max(random.randint(1, 20), random.randint(1, 20))
-    
-    def roll_d(self):
-        self.r = min(random.randint(1, 20), random.randint(1, 20))
+    def roll_roll(self):
+        roll1 = random.randint(1, 20)
+        roll2 = random.randint(1, 20)
+        if self.b == "a":
+            self.r = max(roll1, roll2)
+            self.rr = min(roll1, roll2)
+        else:
+            self.r = min(roll1, roll2)
+            self.rr = max(roll1, roll2)
 
 
-test1 = Player("test1", +10, "a")
-test2 = Player("test2", +1, "")
-test3 = Player("test3", -10, "d")
+test1 = Player("elfe", +5, "a")
+test2 = Player("humain", +1, "")
+test3 = Player("orc", -5, "d")
 initiative = [test1, test2, test3]
 
 @bot.event
@@ -116,9 +118,13 @@ def sort_ini(p: Player):
         return p.r+p.m
 
 def roll_initiative():
+    biggest = 0
     for i in initiative:
         i.roll()
-    initiative.sort(reverse=True, key=lambda p: (sort_ini(p), p.m))    
+        if len(i.n)+len(str(i.r + i.m)) > biggest:
+            biggest = len(i.n)+len(str(i.r + i.m))
+    initiative.sort(reverse=True, key=lambda p: (sort_ini(p), p.m))
+    return biggest 
 
 
 @bot.hybrid_command()
@@ -145,10 +151,18 @@ async def i(ctx, *, msg):
 
 @bot.tree.command(name="roll_ini", description="roll initiative")
 async def roll_ini(interaction: discord.Interaction):
-    roll_initiative()
+    biggest = roll_initiative()
     res = ""
     for i in initiative:
-        res += f"{i.n} : {i.r+i.m} ({i.r}+{i.m})\n"
+        sign = ""
+        outcoms = str(i.r)
+        space_brake = (biggest+5-len(i.n)-len(str(i.r+i.m)))*" "
+        if i.m >= 0:
+            sign = "+"
+        if hasattr(i, 'rr') :
+            outcoms += "|" + str(i.rr)
+
+        res += f"{i.n} : {i.r+i.m}{space_brake}{outcoms} {sign}{i.m}\n"
 
     await interaction.response.send_message(f"```md\n{res}```")
 
